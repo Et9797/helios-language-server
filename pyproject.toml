@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "helios-language-server"
+version = "0.1.0"
+description = "Language server for Helios, a non-Haskell Cardano smart contract DSL."
+authors = ["et <et>"]
+license = "MIT"
+keywords = [
+  "cardano",
+  "helios",
+  "neovim",
+  "lsp"
+]
+packages = [
+  { include = "helios_ls" }
+]
+
+[tool.poetry.dependencies]
+python = "3.10.*"
+loguru = "^0.6.0"
+pygls = "^0.13.1"
+tree-sitter = "^0.20.1"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^5.0.4"
+
+[tool.poetry.scripts]
+helios-language-server = 'helios_ls.server:main'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
