@@ -1,4 +1,5 @@
 .venv
+dist/
 __pycache__/
 helios_ls/test.hl
 helios_ls/hover

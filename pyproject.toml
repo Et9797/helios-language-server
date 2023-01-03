@@ -2,7 +2,7 @@
 name = "helios-language-server"
 version = "0.1.0"
 description = "Language server for Helios, a non-Haskell Cardano smart contract DSL."
-authors = ["et <et>"]
+authors = ["et <etet1997@hotmail.com>"]
 license = "MIT"
 keywords = [
   "cardano",
