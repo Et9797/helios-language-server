@@ -34,10 +34,10 @@ Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framewo
     ```json
     {
         "languageserver": {
-        "helios": {
-          "command": "helios-language-server",
-    		"args": ["--stdio"],
-          "filetypes": ["*.hl", "hl"]
+          "helios": {
+            "command": "helios-language-server",
+            "args": ["--stdio"],
+            "filetypes": ["*.hl", "hl"]
         }
     }
     ```
