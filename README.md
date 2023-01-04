@@ -45,7 +45,7 @@ Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framewo
 
 ### VSCode
 
-&emsp See <a href="https://github.com/Et9797/vscode-helios">vscode-helios</a>.
+&emsp; See <a href="https://github.com/Et9797/vscode-helios">vscode-helios</a>.
 
 ## Capabilities
 - [x] Auto-completions
