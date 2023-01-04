@@ -2,7 +2,7 @@
 
 [![image-version](https://img.shields.io/pypi/v/helios-language-server.svg)](https://python.org/pypi/helios-language-server)
 [![image-python-versions](https://img.shields.io/badge/python=3.10-blue)](https://python.org/pypi/helios-language-server)
-[![image-pypi-downloads](https://pepy.tech/badge/helios-language-server)](https://pepy.tech/project/helios-language-server)
+[![Downloads](https://static.pepy.tech/badge/helios-language-server)](https://pepy.tech/project/helios-language-server)
 
 Language server for <a href="https://github.com/Hyperion-BT/Helios">Helios</a>, a non-Haskell Cardano smart contract language.
 Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framework and <a href="https://github.com/tree-sitter/tree-sitter">tree-sitter</a> for syntax tree generation.
@@ -51,8 +51,7 @@ Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framewo
 - [ ] Go to definition
 
 ## Comments and tips (**IMPORTANT**)
-Currently only supports builtin types and methods up until Helios v0.9.2 (
-apart from import statements).
+Currently only supports builtin types and methods up until Helios v0.9.2 (apart from import statements).
 
 While in general the tree-sitter parser works fairly decently, there are several shortcomings as it is not always error tolerant. 
 Meaning that if there are syntax errors present in the source, the parser could generate error nodes sometimes spanning the entire document. 
