@@ -44,7 +44,8 @@ Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framewo
     The language server should now activate whenever you open `.hl` files, provided you have `filetype.nvim` plugin installed. 
 
 ### VSCode
-See <a href="https://github.com/Et9797/vscode-helios">vscode-helios</a>.
+
+&emsp See <a href="https://github.com/Et9797/vscode-helios">vscode-helios</a>.
 
 ## Capabilities
 - [x] Auto-completions
