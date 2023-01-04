@@ -1,6 +1,7 @@
+.vscode/
 .venv
 dist/
 __pycache__/
 helios_ls/test.hl
-helios_ls/hover
-helios_ls/signature_helper
+helios_ls/hover.py
+helios_ls/signature_helper.py

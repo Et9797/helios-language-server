@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "helios-language-server"
-version = "0.1.0"
+version = "0.1.1"
 description = "Language server for Helios, a non-Haskell Cardano smart contract DSL."
 authors = ["et <etet1997@hotmail.com>"]
 license = "MIT"

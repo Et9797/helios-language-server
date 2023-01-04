@@ -43,32 +43,35 @@ Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framewo
     ```
     The language server should now activate whenever you open `.hl` files, provided you have `filetype.nvim` plugin installed. 
 
+### VSCode
+See <a href="https://github.com/Et9797/vscode-helios">vscode-helios</a>.
+
 ## Capabilities
 - [x] Auto-completions
-- [x] Syntax errors
 - [ ] Hover
 - [ ] Signature help
+- [ ] Syntax errors
 - [ ] Go to definition
 
 ## Comments and tips (**IMPORTANT**)
 Currently only supports builtin types and methods up until Helios v0.9.2 (apart from import statements).
 
-While in general the tree-sitter parser works fairly decently, there are several shortcomings as it is not always error tolerant. 
-Meaning that if there are syntax errors present in the source, the parser could generate error nodes sometimes spanning the entire document. 
-This will lead to no/unexpected auto-completions or underline the document with error diagnostics. 
-To address the latter issue, it is ***highly*** recommended to add this line to your `init.vim`: `:hi CocErrorHighlight guifg=NONE`. 
+While in general the tree-sitter parser works okay, there are several shortcomings as it is not always very error tolerant. 
+Meaning that if there are syntax errors present in the source code, the parser can sometimes generate error nodes spanning the entire document. 
+This may lead to no/unexpected auto-completions.
 
-Unfortunately, not too much can be done about the error recovery at this stage, as this is still also an open <a href="https://github.com/tree-sitter/tree-sitter/issues/1870#issuecomment-1248659929">issue</a> with tree-sitter. 
-I have tried to address some commonly occuring parsing errors. A plugin I find useful is `Cosco.vim` which allows mapping a key to automatically insert `;` at the end of the line. 
+Unfortunately, not too much can be done about the parser's error recovery ability at this stage, as this is still an open <a href="https://github.com/tree-sitter/tree-sitter/issues/1870#issuecomment-1248659929">issue</a> with tree-sitter. 
+I have tried to address some commonly occuring parsing errors. A plugin I find useful is <a href="https://github.com/lfilho/cosco.vim">Cosco.vim</a> which allows mapping a key to automatically insert `;` at the end of the line. 
 In some cases this can fix the syntax tree and bring back completions, without having to move the cursor and staying in insert mode.
+Similar plugin in VSCode: <a href="https://marketplace.visualstudio.com/items?itemName=chrisvltn.vs-code-semicolon-insertion">Semicolon Insertion Shortcut</a>.
 
 ## To-dos
-- VSCode support
 - Hover
 - Signature help information
 - Parser improvements
 - Advanced diagnostics
 - Semantic highlighting
 - Imports
+- Go to definition
 - Support newer Helios versions
 - Tree-sitter syntax highlighting
