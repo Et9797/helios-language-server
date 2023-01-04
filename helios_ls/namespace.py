@@ -542,15 +542,9 @@ class NamespaceParser:
                      return factory_list_type(item_type=callback_return_type)()
                   elif helios_instance.type_name.startswith('Map'):
                      if func_name == 'map_keys':
-                        return factory_map_type(
-                           key_type=callback_return_type,
-                           value_type=deepcopy(helios_instance.v_type)
-                        )()
+                        return factory_map_type(callback_return_type, deepcopy(helios_instance.v_type))()
                      elif func_name == 'map_values':
-                        return factory_map_type(
-                           key_type=deepcopy(helios_instance.k_type),
-                           value_type=callback_return_type
-                        )()
+                        return factory_map_type(deepcopy(helios_instance.k_type), value_type=callback_return_type)()
                case _:
                   return deepcopy(func.return_type)
 

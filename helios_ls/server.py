@@ -2,13 +2,12 @@ from __future__ import annotations
 from pygls.server import LanguageServer
 from pygls.lsp.types import (
    CompletionList, CompletionOptions, CompletionParams,
-   DidChangeTextDocumentParams, DidOpenTextDocumentParams
+   DidChangeTextDocumentParams
 )
 from tree_sitter import Node
 from .hlparser import parse_source, HELIOS_LANGUAGE
 from .namespace import NamespaceParser
 from .completer import Completer
-from .diagnostics import validate_document
 from loguru import logger
 
 
@@ -19,15 +18,6 @@ ns_parser = NamespaceParser()
 completer = Completer(ns_parser)
 
 
-@server.feature('textDocument/didOpen')
-def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
-   # check src for syntax errors upon opening the file
-   uri = params.text_document.uri
-   doc = ls.workspace.get_document(uri)
-   tree = parse_source(doc.source)
-   validate_document(ls, uri, tree)
-
-
 @server.feature('textDocument/didChange')
 def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
    logger.debug('##################################################')
@@ -35,9 +25,6 @@ def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
    doc = ls.workspace.get_document(uri)
    global tree # global syntax tree object is updated each time the source code is changed
    tree = parse_source(doc.source)
-
-   # diagnostics
-   validate_document(ls, uri, tree)
 
 
 @server.feature('textDocument/completion', CompletionOptions(trigger_characters=['.', ':']))
