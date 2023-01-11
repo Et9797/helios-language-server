@@ -51,7 +51,7 @@ class Completer:
       )
 
    def completions_trigger_char(self, trigger_node: Node) -> List[CompletionItem]:
-      """These are temporary solutions for tree-sitter error intolerance."""
+      """Temporary solutions for parser error intolerance."""
       parent_node = trigger_node.parent
       logger.debug(parent_node)
 

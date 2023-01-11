@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "helios-language-server"
-version = "0.1.1"
+version = "0.2.0"
 description = "Language server for Helios, a non-Haskell Cardano smart contract DSL."
 authors = ["et <etet1997@hotmail.com>"]
 license = "MIT"
+readme = "README.md"
 keywords = [
   "cardano",
   "helios",
@@ -17,7 +18,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "3.10.*"
 loguru = "^0.6.0"
-pygls = "^0.13.1"
+pygls = "0.13.1"
 tree-sitter = "^0.20.1"
 
 [tool.poetry.group.dev.dependencies]

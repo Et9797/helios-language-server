@@ -1,9 +1,10 @@
 from __future__ import annotations
+import re
 from inspect import isclass
 from typing import List, Type, Tuple, Union, cast
 from tree_sitter import Tree, Node
 from .helios_types import (
-   StructNamespace, Element, HeliosType, HeliosFunction,
+   HeliosKeyword, StructNamespace, Element, HeliosType, HeliosFunction,
    print_function, error_function, keywords,
    factory_enum_variant_type, factory_enum_type, factory_struct_type,
    HeliosData, HeliosInt, HeliosBool, HeliosString, HeliosByteArray,
@@ -32,13 +33,17 @@ BUILTIN_TYPES: List[Type[HeliosType]] = [
    HeliosTxOutput, HeliosTxInput, HeliosScriptPurpose, HeliosTx, HeliosScriptContext
 ]
 
-GLOBALS = [print_function, error_function, *keywords]
+GLOBALS: List[HeliosFunction | HeliosKeyword] = [print_function, error_function, *keywords]
 
 VALUE_EXPRESSIONS = [
    "literal_expression", "value_ref_expression", "value_path_expression",
    "unary_expression", "binary_expression", "parens_expression",
    "call_expression", "member_expression", "ifelse_expression", "switch_expression"
 ]
+
+CACHED_EXPRESSIONS = {}
+# Avoids having to re-compute entire value expressions. Otherwise hits a bottleneck in performance 
+# after many chained call expressions, and auto-completion starts taking unacceptably long
 
 
 class NamespaceParser:
@@ -51,15 +56,12 @@ class NamespaceParser:
       """Main method for updating global and local namespace."""
       self.update_global_namespace(tree, position)
       self.update_local_namespace(tree, position)
-      logger.debug(pformat(self.global_types))
-      logger.debug(pformat(self.global_definitions))
-      logger.debug(pformat(self.local_definitions))
 
    def update_global_namespace(self, tree: Tree, position: Position) -> None:
-      """Updates the global namespace for the document source: the global types,
-      and the global definitions. Global types are those builtin in Helios and
-      user-defined top-level struct & enum types. Global definitions include top-level
-      constants and function statements. Constants can be (anon) functions themselves."""
+      """Updates the global namespace for the document source: the global types, and the
+      global definitions. Global types are those builtin in Helios and user-defined top-level
+      struct & enum types. Global definitions include top-level constants and function statements.
+      Constants can be (anon) functions themselves."""
       # Clear previous namespace
       self.global_types.clear()
       self.global_types = deepcopy(BUILTIN_TYPES)
@@ -89,17 +91,20 @@ class NamespaceParser:
                self.global_types.append(factory_enum_type(name, enum_variants))
             case "const_statement":
                const = self.parse_const_or_assignment(node, element='constant')
-               if const:
-                  self.global_definitions.append(const)
+               if not const:
+                  continue
+               self.global_definitions.append(const)
             case "function_statement":
                identifier = self.name(node)
                func = self.parse_function(node)
-               if func:
-                  func.identifier = identifier
-                  func.element = 'function'
-                  self.global_definitions.append(func)
+               if not func:
+                  continue
+               func.identifier = identifier
+               func.element = 'function'
+               self.global_definitions.append(func)
          if self.reached_destination_node(position, node):
-            break # no hoisting in Helios so we can stop parsing after reaching the cursor node
+            # no hoisting in Helios so we can stop parsing after reaching the cursor node
+            break
 
    def update_local_namespace(self, tree: Tree, position: Position) -> None:
       """Updates the the local namespace for function and method blocks. Namespace includes
@@ -127,18 +132,18 @@ class NamespaceParser:
          if isinstance(node_or_str, Node):
             identifier = self.name(node_or_str) # assignment_expression node
          else:
-            identifier = node_or_str # assignment_expression node
+            identifier = node_or_str # string 
          helios_instance.identifier = identifier
          helios_instance.element = 'variable'
          helios_instance.documentation = None
          self.local_definitions.append(helios_instance)
 
       def local_ns(node: Node):
-         """Parses the local namesapce. This comprises local (anon) function parameters, and local
-         assignment expressions. The solution below is not clever because it does not take into account
-         scope, and therefore you cannot use a variable name multiple times inside a function/if-else scope.
-         Helios does have some limitations on using multiple variable names so it might not be too big of a
-         deal for now."""
+         """Parses the local namesapce. This comprises local (anon) function parameters, 
+         and local assignment expressions. The solution below is not clever because it 
+         does not take into account scope, and therefore you cannot use a variable name 
+         multiple times inside a function/if-else block. Helios does have some limitations 
+         on using multiple variable names, so it might not be too big of a deal for now."""
          query = HELIOS_LANGUAGE.query(
             """
                [
@@ -146,39 +151,44 @@ class NamespaceParser:
                      (func_literal
                         (func_args)?)) @func
                   (assignment_expression) @assign
-                  (switch_expression) @switch_expr
+                  (switch_expression) @expr.switch
                ]
             """
          )
          nodes = query.captures(node)
          for n, _ in nodes:
-            if n.type == "assignment_expression":
-               expr = next(filter(lambda e: e.type in VALUE_EXPRESSIONS, n.named_children), None)
-               if not expr:
-                  continue
-               helios_instance = cast(Union[HeliosType, HeliosFunction, None], self.infer_expr_type(expr))
-               if helios_instance:
-                  add_to_local_definitions(n, helios_instance)
-            elif n.type == "literal_expression":
-               helios_function = cast(Union[HeliosFunction, None], self.infer_expr_type(n))
-               if helios_function:
-                  self.local_definitions.extend(helios_function.parameters)
-            elif n.type == "switch_expression":
-               expr = next(filter(lambda e: e.type in VALUE_EXPRESSIONS, n.named_children), None)
-               if not expr:
-                  continue
-               enum = cast(Union[HeliosType, None], self.infer_expr_type(expr))
-               enum_variants = [variant for variant in enum.path_completions() if isclass(variant)]
-               if not enum_variants:
-                  continue
-               variant_renames = list(filter(lambda n: n.type == "variant_rename", n.named_children)) # renames get completions
-               for vr in variant_renames:
-                  name = vr.child_by_field_name('name').text.decode('utf8')
-                  variant = vr.child_by_field_name('variant').text.decode('utf8')
-                  for v in enum_variants:
-                     variant_type_name: str = v.type_name.split('::')[-1]
-                     if variant == variant_type_name:
-                        add_to_local_definitions(name, v())
+            match n.type:
+               case "assignment_expression":
+                  expr = next(filter(lambda e: e.type in VALUE_EXPRESSIONS, n.named_children), None)
+                  if not expr:
+                     continue
+                  helios_instance = cast(Union[HeliosType, HeliosFunction, None], self.infer_expr_type(expr))
+                  if helios_instance:
+                     add_to_local_definitions(n, helios_instance)
+               case "literal_expression":
+                  # func literal (anon func)
+                  helios_function = cast(Union[HeliosFunction, None], self.infer_expr_type(n))
+                  if helios_function:
+                     self.local_definitions.extend(helios_function.parameters)
+               case "switch_expression":
+                  # switch case renames get completions
+                  expr = next(filter(lambda e: e.type in VALUE_EXPRESSIONS, n.named_children), None)
+                  if not expr:
+                     continue
+                  enum_instance = cast(Union[HeliosType, None], self.infer_expr_type(expr))
+                  if not enum_instance:
+                     continue
+                  enum_variants = [variant for variant in enum_instance.path_completions() if isclass(variant)]
+                  if not enum_variants:
+                     continue
+                  variant_renames = list(filter(lambda n: n.type == "variant_rename", n.named_children))
+                  for vr in variant_renames:
+                     name = vr.child_by_field_name('name').text.decode('utf8')
+                     variant = vr.child_by_field_name('variant').text.decode('utf8')
+                     for v in enum_variants:
+                        variant_type_name: str = v.type_name.split('::')[-1]
+                        if variant == variant_type_name:
+                           add_to_local_definitions(name, v())
 
       match current_node.type:
          case "const_statement":
@@ -190,25 +200,26 @@ class NamespaceParser:
             local_ns(expr)
          case "struct_statement":
             for node in current_node.named_children:
-               if node.start_point[0] <= line <= node.end_point[0]:
-                  if node.type in ("method_statement", "function_statement"):
-                     if node.type == "method_statement":
-                        identifier = self.name(current_node)
-                        helios_struct = next(filter(lambda t: t.type_name == identifier, self.global_types))
-                        self.local_definitions.append(helios_struct(identifier="self", element="variable"))
-                     helios_function = self.parse_function(node)
-                     if not helios_function:
-                        return
-                     self.local_definitions.extend(helios_function.parameters)
-                     block = next(filter(lambda n: n.type == 'block', node.named_children))
-                     local_ns(block)
-                  elif node.type == "const_statement":
-                     expr = next(
-                        filter(lambda n: n.type in VALUE_EXPRESSIONS, node.named_children), None
-                     )
-                     if not expr:
-                        return
-                     local_ns(expr)
+               if not (node.start_point[0] <= line <= node.end_point[0]):
+                  continue
+               if node.type in ("method_statement", "function_statement"):
+                  if node.type == "method_statement":
+                     identifier = self.name(current_node)
+                     helios_struct = next(filter(lambda t: t.type_name == identifier, self.global_types))
+                     self.local_definitions.append(helios_struct(identifier="self", element="variable"))
+                  helios_function = self.parse_function(node)
+                  if not helios_function:
+                     return
+                  self.local_definitions.extend(helios_function.parameters)
+                  block = next(filter(lambda n: n.type == 'block', node.named_children))
+                  local_ns(block)
+               elif node.type == "const_statement":
+                  expr = next(
+                     filter(lambda n: n.type in VALUE_EXPRESSIONS, node.named_children), None
+                  )
+                  if not expr:
+                     return
+                  local_ns(expr)
          case "function_statement" | "main_function_statement":
             helios_function = self.parse_function(current_node)
             if not helios_function:
@@ -249,26 +260,30 @@ class NamespaceParser:
          match node.type:
             case "data_field":
                field = self.parse_field_or_func_param(node, element='field')
-               if field:
-                  struct_ns["fields"].append(field)
+               if not field:
+                  continue
+               struct_ns["fields"].append(field)
             case "const_statement":
                const = self.parse_const_or_assignment(node, element='constant')
-               if const:
-                  struct_ns["constants"].append(const)
+               if not const:
+                  continue
+               struct_ns["constants"].append(const)
             case "function_statement":
                identifier = self.name(node)
                func = self.parse_function(node)
-               if func:
-                  func.identifier = identifier
-                  func.element = 'function'
-                  struct_ns["functions"].append(func)
+               if not func:
+                  continue
+               func.identifier = identifier
+               func.element = 'function'
+               struct_ns["functions"].append(func)
             case "method_statement":
                identifier = self.name(node)
                method = self.parse_function(node)
-               if method:
-                  method.identifier = identifier
-                  method.element = 'method'
-                  struct_ns["methods"].append(method)
+               if not method: 
+                  continue
+               method.identifier = identifier
+               method.element = 'method'
+               struct_ns["methods"].append(method)
 
       return struct_ns
 
@@ -450,7 +465,7 @@ class NamespaceParser:
       type = type.text.decode("utf8")
       return (name, type)
 
-   #----------------------------- Expression type parser -----------------------------#
+   #--------------------------------------- Expression type parser ---------------------------------------#
 
    def infer_expr_type(self, node: Node) -> HeliosType | HeliosFunction | None:
       """Takes a value expression node and parses the expression using recursive descent approach,
@@ -478,19 +493,40 @@ class NamespaceParser:
    def parse_member_expression(self, node: Node) -> HeliosType | HeliosFunction | None:
       node_children = node.named_children
 
-      expr, identifier = node_children[0], node_children[1]
+      expr_node, identifier = node_children[0], node_children[1]
 
-      helios_instance = cast(Union[HeliosType, HeliosFunction, None], self.infer_expr_type(expr))
+      expr_str = re.sub(r'\s+', '', expr_node.text.decode('utf8'))
+      cached_helios_instance = CACHED_EXPRESSIONS.get(expr_str)
 
-      if not helios_instance:
-         return
+      if cached_helios_instance:
+         local_definition = next(filter(lambda i: i.identifier == expr_str, self.local_definitions), None)
+         if local_definition:
+            if local_definition != cached_helios_instance:
+               # value was changed, so clear the cache and use the new local definition instead
+               logger.debug(pformat(CACHED_EXPRESSIONS))
+               logger.debug(self.local_definitions)
+               CACHED_EXPRESSIONS.clear()
+               logger.debug("Cache cleared")
+               helios_instance = local_definition
+            else:
+               helios_instance = cached_helios_instance
+         else:
+            helios_instance = cached_helios_instance
+      else:
+         helios_instance = cast(Union[HeliosType, HeliosFunction, None], self.infer_expr_type(expr_node))
+
+         if not helios_instance:
+            return
+
+         # cache the hl instance
+         CACHED_EXPRESSIONS[expr_str] = helios_instance
 
       if identifier.is_missing:
          return helios_instance
 
       identifier = identifier.text.decode('utf8') # identifier after the . in string fmt
 
-      # get the member completions of the left expr. eg, if the expr is 30.show(), gets the members for '30', which is of type Int
+      # get the member completions for the left expr
       member_completions = helios_instance.member_completions()
 
       if not member_completions:
@@ -525,7 +561,7 @@ class NamespaceParser:
                   return
                return callback
 
-            # Some functions like `map` and `fold` for lists and maps have type parameters, and require special handling.
+            # Some functions like `map` and `fold` for lists have type parameters, and require special handling.
             match func_name := func.identifier:
                case 'fold' | 'fold_keys' | 'fold_values':
                   callback = get_callback()
@@ -544,7 +580,7 @@ class NamespaceParser:
                      if func_name == 'map_keys':
                         return factory_map_type(callback_return_type, deepcopy(helios_instance.v_type))()
                      elif func_name == 'map_values':
-                        return factory_map_type(deepcopy(helios_instance.k_type), value_type=callback_return_type)()
+                        return factory_map_type(deepcopy(helios_instance.k_type), callback_return_type)()
                case _:
                   return deepcopy(func.return_type)
 
@@ -615,9 +651,9 @@ class NamespaceParser:
             if map_type:
                return map_type()
          case "struct_literal":
-            # Can be struct instance creation (eg, Datum{deadline: 100, addr: #12345}),
-            # which will have a struct_identifier field, OR a path type, ie accessing an
-            # enum variant with a field, in which case there will be a path_type node
+            # Can be struct instance creation (eg, Datum{deadline: 100, addr: #12345}), which will have a 
+            # struct_identifier field, OR a path type, ie accessing an enum variant with a field, in which 
+            # case there will be a path_type node
             path_type = next(filter(lambda n: n.type == "path_type", literal.named_children), None)
             if path_type:
                s = cast(Union[HeliosType, HeliosFunction, None], self.parse_value_path_expression(path_type))
@@ -785,8 +821,8 @@ class NamespaceParser:
          return helios_instance
 
    def parse_ifelse_switch_expression(self, node: Node) -> HeliosType | HeliosFunction | None:
-      """Takes an ifelse/switch expression node and checks the return types for each block.
-      If the block return types are not the same, it will return None, HeliosType/HeliosFunction otherwise."""
+      """Takes an ifelse/switch expression node and checks the return types for each block. If the 
+      block return types are not the same, it will return None, HeliosType/HeliosFunction otherwise."""
       block_nodes = list(filter(lambda n: n.type == 'block', node.named_children))
 
       value_expressions = []

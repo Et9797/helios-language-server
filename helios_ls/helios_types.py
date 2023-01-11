@@ -135,7 +135,7 @@ class HeliosType(ABC):
    identifier: str | None = field(init=True, default=None) # name of the instance defined in Helios
    element: Element | None = field(init=True, default=None)
    documentation: str | MarkupContent | None = field(init=True, default=None)
-   fields: List[HeliosType | HeliosFunction] = field(init=False, repr=False, default_factory=list) # for enum variants
+   fields: List[HeliosType | HeliosFunction] = field(init=False, repr=False, default_factory=list) # for enum variants & struct
    type_name: str = field(init=False, repr=False, default='')
    # name of the (user-defined) Helios type in string repr. Default name except for dynamic types (eg, structs/enums)
    container_kind: ContainerKind = field(init=False, repr=False, default='struct')
@@ -233,6 +233,7 @@ def factory_struct_type(struct_name: str, struct_ns: StructNamespace):
    @dataclass
    class HeliosStruct(HeliosType):
       type_name: str = field(init=False, repr=True, default=struct_name)
+      fields: List[HeliosType | HeliosFunction] = field(init=False, repr=False, default_factory=lambda: struct_ns["fields"])
 
       def member_completions(self) -> List[HeliosType | HeliosFunction]:
          return [self._serialize, *struct_ns["fields"], *struct_ns["methods"]]
@@ -748,7 +749,7 @@ def factory_list_type(item_type: Type[HeliosType]):
                   kind=MarkupKind.Markdown,
                   value=(
                      "Returns the first item in the list that satisfies the predicate, wrapped in an `Option`. "
-                     f"Returns `Option[{item_type.type_name}]::None` if no items match the predicate."
+                     f"Returns `Option`[`{item_type.type_name}`]::`None` if no items match the predicate."
                   )
                )
             ),
@@ -903,7 +904,8 @@ def factory_map_type(key_type: Type[HeliosType], value_type: Type[HeliosType]):
                   kind=MarkupKind.Markdown,
                   value=(
                      "Returns the value of the first entry in the map that matches the given key, "
-                     f"wrapped in an `Option`. Returns `Option[{value_type.type_name}]::None` if the key isn't found."
+                     f"wrapped in an `Option`. Returns `Option[{value_type.type_name}]`::`None` if the key "
+                     "is not found."
                   )
                )
             ),
