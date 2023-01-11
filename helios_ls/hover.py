@@ -4,7 +4,7 @@ from typing import List, Type, cast
 from tree_sitter import Node, Tree
 from pygls.lsp.types.basic_structures import Range, Position
 from pygls.lsp.types import Hover, HoverParams
-from .helios_types import HeliosFunction, HeliosType 
+from .helios_types import HeliosFunction, HeliosType
 from .hlparser import HELIOS_LANGUAGE
 from .namespace import NamespaceParser, CACHED_EXPRESSIONS
 from loguru import logger
@@ -17,8 +17,8 @@ class Hoverer:
    def node_from_word(self, tree: Tree, word: str, position: Position):
       line, char = position.line, position.character
       query = HELIOS_LANGUAGE.query(
-         f""" 
-            (identifier) @word 
+         f"""
+            (identifier) @word
             (#match? @word "{word}")
          """
       )
@@ -28,7 +28,7 @@ class Hoverer:
 
       if not result:
          query = HELIOS_LANGUAGE.query(
-            f""" 
+            """
             [
                (bool_type) @primitive.bool
                (int_type) @primitive.int
@@ -99,7 +99,7 @@ class Hoverer:
    def parse_enum_struct(self, id_node: Node, n: Node) -> Hover | None:
       n_str = id_node.text.decode('utf8')
       return Hover(
-         contents=f"({'struct' if n.type == 'struct_statement' else 'enum'}) {n_str}", 
+         contents=f"({'struct' if n.type == 'struct_statement' else 'enum'}) {n_str}",
          range=self.get_range(id_node)
       )
 
@@ -139,9 +139,9 @@ class Hoverer:
    def parse_data_field(self, id_node: Node, n: Node) -> Hover | None:
       l = list(map(lambda x: re.sub(r'\s+', '', x), n.text.decode('utf8').split(':')))
       field_str, type_str = l[0], l[1]
-      detail = f"(field) {field_str}: {type_str}" 
+      detail = f"(field) {field_str}: {type_str}"
       return Hover(contents=detail, range=self.get_range(id_node))
-      
+
    def parse_enum_variant(self, id_node: Node, n: Node) -> Hover | None:
       n_str = n.text.decode('utf8')
       enum = n.parent
@@ -163,7 +163,7 @@ class Hoverer:
          return Hover(contents=detail, range=self.get_range(id_node))
 
       n = cast(Node, id_node.parent)
-      logger.debug(n)     
+      logger.debug(n)
 
       match n.type:
          case "member_expression":

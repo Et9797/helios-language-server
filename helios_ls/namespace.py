@@ -42,7 +42,7 @@ VALUE_EXPRESSIONS = [
 ]
 
 CACHED_EXPRESSIONS = {}
-# Avoids having to re-compute entire value expressions. Otherwise hits a bottleneck in performance 
+# Avoids having to re-compute entire value expressions. Otherwise hits a bottleneck in performance
 # after many chained call expressions, and auto-completion starts taking unacceptably long
 
 
@@ -132,17 +132,17 @@ class NamespaceParser:
          if isinstance(node_or_str, Node):
             identifier = self.name(node_or_str) # assignment_expression node
          else:
-            identifier = node_or_str # string 
+            identifier = node_or_str # string
          helios_instance.identifier = identifier
          helios_instance.element = 'variable'
          helios_instance.documentation = None
          self.local_definitions.append(helios_instance)
 
       def local_ns(node: Node):
-         """Parses the local namesapce. This comprises local (anon) function parameters, 
-         and local assignment expressions. The solution below is not clever because it 
-         does not take into account scope, and therefore you cannot use a variable name 
-         multiple times inside a function/if-else block. Helios does have some limitations 
+         """Parses the local namesapce. This comprises local (anon) function parameters,
+         and local assignment expressions. The solution below is not clever because it
+         does not take into account scope, and therefore you cannot use a variable name
+         multiple times inside a function/if-else block. Helios does have some limitations
          on using multiple variable names, so it might not be too big of a deal for now."""
          query = HELIOS_LANGUAGE.query(
             """
@@ -279,7 +279,7 @@ class NamespaceParser:
             case "method_statement":
                identifier = self.name(node)
                method = self.parse_function(node)
-               if not method: 
+               if not method:
                   continue
                method.identifier = identifier
                method.element = 'method'
@@ -651,8 +651,8 @@ class NamespaceParser:
             if map_type:
                return map_type()
          case "struct_literal":
-            # Can be struct instance creation (eg, Datum{deadline: 100, addr: #12345}), which will have a 
-            # struct_identifier field, OR a path type, ie accessing an enum variant with a field, in which 
+            # Can be struct instance creation (eg, Datum{deadline: 100, addr: #12345}), which will have a
+            # struct_identifier field, OR a path type, ie accessing an enum variant with a field, in which
             # case there will be a path_type node
             path_type = next(filter(lambda n: n.type == "path_type", literal.named_children), None)
             if path_type:
@@ -821,7 +821,7 @@ class NamespaceParser:
          return helios_instance
 
    def parse_ifelse_switch_expression(self, node: Node) -> HeliosType | HeliosFunction | None:
-      """Takes an ifelse/switch expression node and checks the return types for each block. If the 
+      """Takes an ifelse/switch expression node and checks the return types for each block. If the
       block return types are not the same, it will return None, HeliosType/HeliosFunction otherwise."""
       block_nodes = list(filter(lambda n: n.type == 'block', node.named_children))
 

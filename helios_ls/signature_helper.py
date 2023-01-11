@@ -38,7 +38,7 @@ class SignatureHelper:
       return n if n.type in ("call_expression", "struct_literal") else None
 
    def active_index_from_node(self, node: Node) -> int:
-      """Checks how many comma characters are inside {} or () and returns the corresponding 
+      """Checks how many comma characters are inside {} or () and returns the corresponding
       active parameter index."""
       if node.type == "call_expression":
          c = list(map(lambda x: re.sub(r'\s+', '', x), node.text.decode('utf8').split('.')))[-1]
@@ -62,7 +62,7 @@ class SignatureHelper:
       elif n.type == "value_path_expression":
          l = list(map(lambda x: re.sub(r'\s+', '', x), n.text.decode('utf8').split('::')))
          type_str, member_str = l[0], l[-1]
-         helios_type = next(filter(lambda t: t.type_name == type_str, self.ns_parser.global_types ), None)
+         helios_type = next(filter(lambda t: t.type_name == type_str, self.ns_parser.global_types), None)
          if not helios_type:
             return
          member = next(filter(lambda m: m.identifier == member_str, helios_type.path_completions()), None)
@@ -107,7 +107,7 @@ class SignatureHelper:
          for f in struct_or_variant().fields:
             detail = f.completion_information_self()['detail'].replace('(field) ', '')
             if not type_sig:
-               type_sig += detail 
+               type_sig += detail
             else:
                type_sig += ', ' + detail
          type_sig = '(' + type_sig + ')'
@@ -134,7 +134,7 @@ class SignatureHelper:
          if not variant().fields:
             return
          return get_type_sig(variant, enum)
-         
+
       if struct.__name__ != "HeliosStruct":
          # attempted to instantiate an enum instance (eg, Redeemer{}) or non user-defined struct
          return
@@ -153,7 +153,7 @@ class SignatureHelper:
          if not info:
             return
          if isinstance(info, tuple):
-            type_sig, documentation = info 
+            type_sig, documentation = info
          else:
             type_sig = info
             logger.debug(type_sig)
