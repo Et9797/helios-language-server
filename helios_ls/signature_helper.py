@@ -1,3 +1,4 @@
+from __future__ import annotations
 import re
 from inspect import isclass
 from typing import Tuple, Union, Type, cast
@@ -12,7 +13,7 @@ from loguru import logger
 
 
 TypeSignature = str
-Documentation = str | MarkupContent
+Documentation = Union[str, MarkupContent]
 
 
 class SignatureHelper:
@@ -168,8 +169,20 @@ class SignatureHelper:
 
       params_pattern = re.compile(r'\((.+)\)')
       params_str = re.findall(params_pattern, type_sig)[0]
-      p = re.compile(r',(?![^(]*\))\s*')
-      params = re.split(p, params_str)
+      logger.debug(params_str)
+
+      params = []
+      start = 0
+      open_parentheses = 0
+      for match in re.finditer(r'[(),]', params_str):
+         if match.group() == '(':
+            open_parentheses += 1
+         elif match.group() == ')':
+            open_parentheses -= 1
+         elif match.group() == ',' and open_parentheses == 0:
+            params.append(params_str[start:match.start()])
+            start = match.end()
+      params.append(params_str[start:])
       logger.debug(params)
 
       if len(params) == 1:

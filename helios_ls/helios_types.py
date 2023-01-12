@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import List, Dict, TypedDict, Literal, Type
+from typing import List, Dict, Type, Union
+from typing_extensions import TypedDict, Literal
 from dataclasses import dataclass, field
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types.basic_structures import MarkupContent, MarkupKind
 
 
 ####### Type aliases and declarations
-CompletionInformation = Dict[str, str | MarkupContent | CompletionItemKind | None]
+CompletionInformation = Dict[str, Union[str, MarkupContent, CompletionItemKind, None]]
 Element = Literal['variable', 'constant', 'field', 'function', 'method', 'property', 'enum variant', 'keyword']
 ContainerKind = Literal['struct', 'enum']
 element_to_itemkind = {
@@ -128,10 +129,9 @@ error_function = HeliosFunction(
 
 
 ####### Helios base type class. All types inherit from this class
-@dataclass(kw_only=True)
+@dataclass
 class HeliosType(ABC):
-   """This base class is inherited by all Helios builtin types and user-defined
-   types (structs & enums)."""
+   """This base class is inherited by all Helios builtin types and user-defined types (structs & enums)."""
    identifier: str | None = field(init=True, default=None) # name of the instance defined in Helios
    element: Element | None = field(init=True, default=None)
    documentation: str | MarkupContent | None = field(init=True, default=None)
@@ -246,7 +246,7 @@ def factory_struct_type(struct_name: str, struct_ns: StructNamespace):
 
 
 ####### Helios enum
-Field = HeliosType | HeliosFunction
+Field = Union[HeliosType, HeliosFunction]
 
 
 def factory_enum_variant_type(

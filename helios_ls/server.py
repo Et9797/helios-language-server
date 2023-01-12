@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Union
 from pygls.server import LanguageServer
 from pygls.lsp.types import (
    CompletionList, CompletionOptions, CompletionParams, Hover, HoverParams,
@@ -72,7 +74,7 @@ def hover(ls: LanguageServer, params: HoverParams) -> Hover | None:
    word = doc.word_at_position(params.position)
 
    try:
-      hover_txt: Hover | None = hoverer.infer_hover(tree, word, params)
+      hover_txt: Union[Hover, None] = hoverer.infer_hover(tree, word, params)
    except Exception as e:
       logger.error(e)
       return None
@@ -89,7 +91,7 @@ def signature_help(ls: LanguageServer, params: SignatureHelpParams) -> Signature
    tree = parse_source(doc.source)
 
    try:
-      signature_help = signature_helper.infer_signature(tree, doc, params)
+      signature_help: Union[SignatureHelp, None] = signature_helper.infer_signature(tree, doc, params)
    except Exception as e:
       logger.error(e)
       return None

@@ -1,6 +1,6 @@
+from __future__ import annotations
 import re
 from inspect import isclass
-from types import NoneType
 from typing import List, Tuple, Union, cast
 from typing_extensions import Literal
 from tree_sitter import Tree, Node
@@ -75,7 +75,7 @@ class Completer:
                      logger.debug(expr)
             else:
                helios_instance = self.ns_parser.infer_expr_type(value_expr_nodes[-1])
-               if isinstance(helios_instance, (HeliosFunction, NoneType)):
+               if not isinstance(helios_instance, HeliosType):
                   return []
                else:
                   expr = helios_instance

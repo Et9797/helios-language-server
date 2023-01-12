@@ -1,7 +1,7 @@
 # helios-language-server
 
 [![image-version](https://img.shields.io/pypi/v/helios-language-server.svg)](https://python.org/pypi/helios-language-server)
-[![image-python-versions](https://img.shields.io/badge/python=3.10-blue)](https://python.org/pypi/helios-language-server)
+[![image-python-versions](https://img.shields.io/badge/python->=3.7-blue)](https://python.org/pypi/helios-language-server)
 
 Language server for <a href="https://github.com/Hyperion-BT/Helios">Helios</a>, a non-Haskell Cardano smart contract language.
 Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framework and <a href="https://github.com/tree-sitter/tree-sitter">tree-sitter</a> for syntax tree generation.
@@ -10,7 +10,7 @@ Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framewo
 
 ## Requirements
 
-* `Python 3.10`
+* `Python >=3.7`
 * `python3-pip` (Ubuntu/Debian)
 * `python3-venv` (Ubuntu/Debian)
 

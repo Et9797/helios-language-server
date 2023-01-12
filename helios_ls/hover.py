@@ -1,3 +1,4 @@
+from __future__ import annotations
 import re
 from inspect import isclass
 from typing import List, Type, cast
@@ -165,22 +166,21 @@ class Hoverer:
       n = cast(Node, id_node.parent)
       logger.debug(n)
 
-      match n.type:
-         case "member_expression":
-            return self.parse_member_expr(id_node, n)
-         case "value_ref_expression":
-            return self.parse_value_ref_expr(id_node, n)
-         case "ref_type" | "struct_literal":
-            return self.parse_ref_type(id_node)
-         case "enum_statement" | "struct_statement":
-            return self.parse_enum_struct(id_node, n)
-         case "value_path_expression" | "path_type":
-            return self.parse_value_path_expr(id_node, n)
-         case "parameter":
-            return self.parse_parameter(id_node, n)
-         case "function_statement" | "method_statement":
-            return self.parse_function(id_node, n, word)
-         case "data_field":
-            return self.parse_data_field(id_node, n)
-         case "enum_variant":
-            return self.parse_enum_variant(id_node, n)
+      if n.type == "member_expression":
+         return self.parse_member_expr(id_node, n)
+      elif n.type == "value_ref_expression":
+         return self.parse_value_ref_expr(id_node, n)
+      elif n.type in ("ref_type", "struct_literal"):
+         return self.parse_ref_type(id_node)
+      elif n.type in ("enum_statement", "struct_statement"):
+         return self.parse_enum_struct(id_node, n)
+      elif n.type in ("value_path_expression", "path_type"):
+         return self.parse_value_path_expr(id_node, n)
+      elif n.type == "parameter":
+         return self.parse_parameter(id_node, n)
+      elif n.type in ("function_statement", "method_statement"):
+         return self.parse_function(id_node, n, word)
+      elif n.type == "data_field":
+         return self.parse_data_field(id_node, n)
+      elif n.type == "enum_variant":
+         return self.parse_enum_variant(id_node, n)
