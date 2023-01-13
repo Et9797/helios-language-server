@@ -49,7 +49,7 @@ Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framewo
 - [x] Auto-completions
 - [x] Hover
 - [x] Signature help
-- [ ] Syntax errors
+- [x] Syntax errors
 - [ ] Go to definition
 
 ## Comments and tips (**IMPORTANT**)
