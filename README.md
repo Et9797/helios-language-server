@@ -52,7 +52,7 @@ Uses the <a href="https://github.com/openlawlibrary/pygls">pygls</a> lsp framewo
 - [x] Syntax errors
 - [ ] Go to definition
 
-## Comments and tips (**IMPORTANT**)
+## Comments
 Currently only supports builtin types and methods up until **Helios v0.9.2** (apart from import statements).
 
 While in general the tree-sitter parser works okay, there are several shortcomings as it is not always error tolerant. 
