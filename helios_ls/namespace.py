@@ -446,14 +446,6 @@ class NamespaceParser:
       name = node.child_by_field_name("name").text.decode("utf8")
       return name
 
-   def name_type_pair(self, node: Node) -> Tuple[str, str] | None:
-      name = self.name(node)
-      type = node.child_by_field_name("type")
-      if not type:
-         return
-      type = type.text.decode("utf8")
-      return (name, type)
-
    #--------------------------------------- Expression type parser ---------------------------------------#
 
    def infer_expr_type(self, node: Node) -> HeliosType | HeliosFunction | None:

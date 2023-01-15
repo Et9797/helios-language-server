@@ -57,6 +57,7 @@ def get_dummy_nodes(tree: Tree) -> List[Node]:
       """
    )
    dummy_nodes = [node for node, _ in query.captures(tree.root_node)]
+
    return dummy_nodes
 
 
