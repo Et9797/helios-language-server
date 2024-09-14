@@ -18,7 +18,7 @@ from loguru import logger
 
 logger.add("/tmp/ls.log", level="DEBUG", format='{time:HH:mm:ss.SSS} ({name}:{function}:{line}) - {message}')
 
-server = LanguageServer(name="helios-language-server", version="0.2.0")
+server = LanguageServer(name="helios-language-server", version="0.3.0")
 ns_parser = NamespaceParser()
 completer = Completer(ns_parser)
 hoverer = Hoverer(ns_parser)
@@ -92,8 +92,8 @@ def hover(ls: LanguageServer, params: HoverParams) -> Hover | None:
    except Exception as e:
       logger.error(e)
       return None
-
-   return hover_txt
+   else:
+      return hover_txt
 
 
 @server.feature('textDocument/signatureHelp', SignatureHelpOptions(trigger_characters=['(', ',', '{']))
@@ -109,8 +109,8 @@ def signature_help(ls: LanguageServer, params: SignatureHelpParams) -> Signature
    except Exception as e:
       logger.error(e)
       return None
-
-   return signature_help
+   else:
+      return signature_help
 
 
 def main() -> None:
